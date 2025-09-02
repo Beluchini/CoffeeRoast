@@ -1,6 +1,10 @@
 using CoffeeRoast.Components;
+using CoffeeRoast.Database;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddDbContext<CoffeeContext>();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
@@ -23,5 +27,12 @@ app.UseAntiforgery();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+
+using (var ServiceScope = app.Services.CreateScope())
+{
+    var context = ServiceScope.ServiceProvider.GetRequiredService<CoffeeContext>();
+    
+    context.Database.Migrate();
+}
 
 app.Run();
