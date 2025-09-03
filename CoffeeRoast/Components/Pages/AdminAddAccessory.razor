@@ -27,13 +27,10 @@
     <select @bind="_product.SubType" disabled="@(string.IsNullOrEmpty(_product.Type))">
         <option value="">Выберите подтип</option>
         @if (_product.Type == "Зерна кофе")
-        { 
-            <option>
-                Выберите подтип кофе
-            </option>
+        {
             @foreach (string item in AddCoffeeType) 
             { 
-                <option value="@item">@item</option> 
+                <option>@item</option> 
             }
         }
         else if (_product.Type == "Аксессуары")
@@ -43,16 +40,39 @@
             </option>
             @foreach (string item in AddAccesType) 
             { 
-                <option value="@item">@item</option> 
+                <option>@item</option> 
             } 
         }
     </select>
+    @if (_product.Type == "Зерна кофе")
+    {
+        <select @bind="_product.DegreeOfRoast">
+            <option>Степень обжарки</option>
+            @foreach (string item in AddRoast)
+            {
+                <option>@item</option>
+            }
+        </select>
+        <select>
+            <option>Регион</option>
+            @foreach (string itwm in AddRegion)
+            {
+                <option>@itwm</option>
+            }
+        </select>
+    }
+    <p>Введите цену</p>
+    <input type="number" @bind="_product.Price"/>
+    
+    <p>Введите количество граммов/штук</p>
+    <input type="number" @bind="_product.Count"/>
+    <button type="submit">Добавить продукт</button>
 </EditForm>
 
 @code {
-    public string[] AddType = {"Зерна кофе","Аксессуары"};
+    public string[] AddType = { "Зерна кофе", "Аксессуары" };
     public string[] AddCoffeeType = { "Арабика", "Робуста", "Купажи", "Specialty" };
-    public string[] AddAccesType = { "Турки","Френч-прессы","Фильтры","Кружки", "Кофемолки"};
+    public string[] AddAccesType = { "Турки", "Френч-прессы", "Фильтры", "Кружки", "Кофемолки" };
     public string[] AddRoast = { "Светлая", "Средняя", "Тёмная" };
     public string[] AddRegion = { "Америка", "Африка", "Азия" };
 
@@ -64,5 +84,4 @@
         ef.SaveChanges();
         _product = new Product();
     }
-
 }
