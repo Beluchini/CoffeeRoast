@@ -2,16 +2,16 @@
 
 namespace CoffeeRoast.Models;
 
-public class Coffee
+public class Product
 {
     [Key] public int Id { get; set; }
     public string Tittle { get; set; }
     public string Description { get; set; }
     public string PhotoLink { get; set; }
     public string Type { get; set; }
-    public string DegreeOfRoast { get; set; }
-    public string Region { get; set; }
+    public string? DegreeOfRoast { get; set; }
+    public string? Region { get; set; }
     public decimal Price { get; set; }
-    public int Weight { get; set; }
+    public int Count { get; set; }
     
 }
