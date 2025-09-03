@@ -1,6 +1,22 @@
 @page "/AdminAddAccessory"
+@using CoffeeRoast.Database
+@using CoffeeRoast.Models
+@rendermode InteractiveServer
+@inject CoffeeContext ef
 <h3>AdminAddAccessory</h3>
 
 @code {
-    
+    public string[] AddType = {"Зерна кофе","Аксессуары"};
+    public string[] AddRoast = { "Светлая", "Средняя", "Тёмная" };
+    public string[] AddRegion = { "Америка", "Африка", "Азия" };
+
+    private Product _product = new Product();
+
+    private void Submit(EditContext arg)
+    {
+        ef.Add(_product);
+        ef.SaveChanges();
+        _product = new Product();
+    }
+
 }
