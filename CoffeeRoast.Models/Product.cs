@@ -9,6 +9,7 @@ public class Product
     public string Description { get; set; }
     public string PhotoLink { get; set; }
     public string Type { get; set; }
+    public string SubType { get; set; }
     public string? DegreeOfRoast { get; set; }
     public string? Region { get; set; }
     public decimal Price { get; set; }

@@ -5,8 +5,54 @@
 @inject CoffeeContext ef
 <h3>AdminAddAccessory</h3>
 
+<EditForm FormName="formAddItem" Model="_product" OnValidSubmit="@Submit">
+    <DataAnnotationsValidator></DataAnnotationsValidator>
+    <p>Название товара</p>
+    <input type="text" @bind="_product.Tittle"/>
+    <p>Ссылка на изображение</p>
+    <input type="text" @bind="_product.PhotoLink"/>
+    <p>Тип товара</p>
+    <select @bind="_product.Type">
+        <option>Выберите тип</option>
+        @foreach (string item in AddType)
+        {
+            <option>@item</option>
+        }
+    </select>
+    
+    <p>Описание</p>
+    <input type="text" @bind="_product.Description"/>
+
+    <p>Подтип товара</p>
+    <select @bind="_product.SubType" disabled="@(string.IsNullOrEmpty(_product.Type))">
+        <option value="">Выберите подтип</option>
+        @if (_product.Type == "Зерна кофе")
+        { 
+            <option>
+                Выберите подтип кофе
+            </option>
+            @foreach (string item in AddCoffeeType) 
+            { 
+                <option value="@item">@item</option> 
+            }
+        }
+        else if (_product.Type == "Аксессуары")
+        { 
+            <option>
+                Выберите подтип аксессуара
+            </option>
+            @foreach (string item in AddAccesType) 
+            { 
+                <option value="@item">@item</option> 
+            } 
+        }
+    </select>
+</EditForm>
+
 @code {
     public string[] AddType = {"Зерна кофе","Аксессуары"};
+    public string[] AddCoffeeType = { "Арабика", "Робуста", "Купажи", "Specialty" };
+    public string[] AddAccesType = { "Турки","Френч-прессы","Фильтры","Кружки", "Кофемолки"};
     public string[] AddRoast = { "Светлая", "Средняя", "Тёмная" };
     public string[] AddRegion = { "Америка", "Африка", "Азия" };
 

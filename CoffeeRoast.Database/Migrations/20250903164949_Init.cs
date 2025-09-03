@@ -56,6 +56,7 @@ namespace CoffeeRoast.Database.Migrations
                     Description = table.Column<string>(type: "TEXT", nullable: false),
                     PhotoLink = table.Column<string>(type: "TEXT", nullable: false),
                     Type = table.Column<string>(type: "TEXT", nullable: false),
+                    SubType = table.Column<string>(type: "TEXT", nullable: false),
                     DegreeOfRoast = table.Column<string>(type: "TEXT", nullable: true),
                     Region = table.Column<string>(type: "TEXT", nullable: true),
                     Price = table.Column<decimal>(type: "TEXT", nullable: false),

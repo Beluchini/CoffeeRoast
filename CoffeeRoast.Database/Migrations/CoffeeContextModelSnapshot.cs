@@ -103,6 +103,10 @@ namespace CoffeeRoast.Database.Migrations
                     b.Property<string>("Region")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("SubType")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Tittle")
                         .IsRequired()
                         .HasColumnType("TEXT");
