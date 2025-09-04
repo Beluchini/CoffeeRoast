@@ -1,9 +1,9 @@
-@page "/AdminAddAccessory"
+@page "/AdminAdd"
 @using CoffeeRoast.Database
 @using CoffeeRoast.Models
 @rendermode InteractiveServer
 @inject CoffeeContext ef
-<h3>AdminAddAccessory</h3>
+<h3>AdminAdd</h3>
 
 <EditForm FormName="formAddItem" Model="_product" OnValidSubmit="@Submit">
     <DataAnnotationsValidator></DataAnnotationsValidator>
@@ -53,7 +53,7 @@
                 <option>@item</option>
             }
         </select>
-        <select>
+        <select @bind="_product.Region">
             <option>Регион</option>
             @foreach (string itwm in AddRegion)
             {
