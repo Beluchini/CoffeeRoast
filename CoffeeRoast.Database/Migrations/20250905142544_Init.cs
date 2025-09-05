@@ -23,7 +23,8 @@ namespace CoffeeRoast.Database.Migrations
                     BasketDegreeOfRoast = table.Column<string>(type: "TEXT", nullable: true),
                     BasketRegion = table.Column<string>(type: "TEXT", nullable: true),
                     BasketPrice = table.Column<decimal>(type: "TEXT", nullable: false),
-                    BasketCount = table.Column<int>(type: "INTEGER", nullable: false)
+                    BasketCount = table.Column<int>(type: "INTEGER", nullable: false),
+                    UserId = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -37,7 +38,14 @@ namespace CoffeeRoast.Database.Migrations
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     Addres = table.Column<string>(type: "TEXT", nullable: false),
-                    City = table.Column<string>(type: "TEXT", nullable: false),
+                    OrderEmail = table.Column<string>(type: "TEXT", nullable: false),
+                    OrderTittle = table.Column<string>(type: "TEXT", nullable: false),
+                    OrderPhotoLink = table.Column<string>(type: "TEXT", nullable: false),
+                    OrderType = table.Column<string>(type: "TEXT", nullable: false),
+                    OrderDegreeOfRoast = table.Column<string>(type: "TEXT", nullable: true),
+                    OrderRegion = table.Column<string>(type: "TEXT", nullable: true),
+                    OrderPrice = table.Column<decimal>(type: "TEXT", nullable: false),
+                    OrderCount = table.Column<int>(type: "INTEGER", nullable: false),
                     OrderDate = table.Column<DateTime>(type: "TEXT", nullable: false),
                     OrderTime = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
@@ -75,7 +83,7 @@ namespace CoffeeRoast.Database.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     Name = table.Column<string>(type: "TEXT", nullable: false),
                     MiddleName = table.Column<string>(type: "TEXT", nullable: false),
-                    LasrName = table.Column<string>(type: "TEXT", nullable: false),
+                    LastName = table.Column<string>(type: "TEXT", nullable: false),
                     Password = table.Column<string>(type: "TEXT", nullable: false),
                     Email = table.Column<string>(type: "TEXT", nullable: false),
                     PhoneNumber = table.Column<string>(type: "TEXT", nullable: false)

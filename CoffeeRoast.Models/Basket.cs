@@ -12,4 +12,5 @@ public class Basket
     public string? BasketRegion { get; set; }
     public decimal BasketPrice { get; set; }
     public int BasketCount { get; set; }
+    public int UserId { get; set; }
 }
