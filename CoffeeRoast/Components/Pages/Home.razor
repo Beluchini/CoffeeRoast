@@ -8,7 +8,7 @@
 
 <h1>Каталог товаров</h1>
 
-<!-- Переключение категорий -->
+<!-- Это выбор категории -->
 <div class="category-tabs">
     <button class="@(_selectedCategory == "Зерна кофе" ? "active" : "")"
             @onclick="() => SelectCoffeeCategory()">
@@ -52,7 +52,7 @@
     </div>
 }
 
-<!-- Фильтры для аксессуаров -->
+<!-- Для аксессуаров -->
 @if (_selectedCategory == "Аксессуары")
 {
     <div class="filters">
@@ -77,7 +77,6 @@
             <h3>@product.Tittle</h3>
             <p>@product.Description</p>
             <p>Цена: @product.Price руб.</p>
-            <p>В наличии: @product.Count @(product.Type == "Зерна кофе" ? "г" : "шт")</p>
             
             @if (product.Type == "Зерна кофе")
             {
@@ -96,6 +95,8 @@
         </div>
     }
 </div>
+
+<!-- @product.Count @(product.Type == "Зерна кофе" ? "г" : "шт") граммы и штуки -->
 
 @code {
     private Basket _basket = new();
