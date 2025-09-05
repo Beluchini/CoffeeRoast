@@ -1,1 +1,231 @@
 ﻿@page "/"
+
+@using CoffeeRoast.Database
+@using CoffeeRoast.Models
+@rendermode InteractiveServer
+@inject CoffeeContext ef
+
+<PageTitle>Home</PageTitle>
+
+<!-- Фильтры для кофе -->
+@if (_selectedCategory == "Зерна кофе")
+{
+    <div class="filters">
+        <h3>Фильтры:</h3>
+        
+        <div class="filter-group">
+            <h4>Тип кофе:</h4>
+            <div class="filter-buttons">
+                <button class="@(_coffeeFilter.Type == "" ? "active" : "")" 
+                        @onclick="() => FixSetCoffeeType()">
+                    Все типы
+                </button>
+                @foreach (var type in new[] { "Арабика", "Робуста", "Купажи", "Specialty" })
+                {
+                    <button class="@(_coffeeFilter.Type == type ? "active" : "")" 
+                            @onclick="() => SetCoffeeFilterType(type)">
+                        @type
+                    </button>
+                }
+            </div>
+        </div>
+
+        <div class="filter-group">
+            <h4>Степень обжарки:</h4>
+            <div class="filter-buttons">
+                <button class="@(_coffeeFilter.Roast == "" ? "active" : "")" 
+                        @onclick="() => FixSetCoffeeRoast()">
+                    Все обжарки
+                </button>
+                @foreach (var roast in new[] { "Светлая", "Средняя", "Тёмная" })
+                {
+                    <button class="@(_coffeeFilter.Roast == roast ? "active" : "")" 
+                            @onclick="() => SetCoffeeFilterRoast(roast)">
+                        @roast
+                    </button>
+                }
+            </div>
+        </div>
+
+        <div class="filter-group">
+            <h4>Регион:</h4>
+            <div class="filter-buttons">
+                <button class="@(_coffeeFilter.Region == "" ? "active" : "")" 
+                        @onclick="() => FixSetCoffeeRegion()">
+                    Все регионы
+                </button>
+                @foreach (var region in new[] { "Америка", "Африка", "Азия" })
+                {
+                    <button class="@(_coffeeFilter.Region == region ? "active" : "")" 
+                            @onclick="() => SetCoffeeFilterRegion(region)">
+                        @region
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Для аксессуаров -->
+@if (_selectedCategory == "Аксессуары")
+{
+    <div class="filters">
+        <h3>Фильтры:</h3>
+        
+        <div class="filter-group">
+            <h4>Тип аксессуаров:</h4>
+            <div class="filter-buttons">
+                <button class="@(_accessoryFilter.Type == "" ? "active" : "")" 
+                        @onclick="() => FixSelectAcces()">
+                    Все аксессуары
+                </button>
+                @foreach (var type in new[] { "Турки", "Френч-прессы", "Фильтры", "Кружки", "Кофемолки" })
+                {
+                    <button class="@(_accessoryFilter.Type == type ? "active" : "")" 
+                            @onclick="() => SetAccessoryFilterType(type)">
+                        @type
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Отображение товаров -->
+<div class="products-grid">
+    @foreach (var product in FilteredProducts)
+    {
+        <div class="product-card">
+            <img src="@product.PhotoLink" alt="@product.Tittle" />
+            <h3>@product.Tittle</h3>
+            <p>@product.Description</p>
+            <p>Цена: @product.Price руб.</p>
+            
+            @if (product.Type == "Зерна кофе")
+            {
+                <p>Тип: @product.SubType</p>
+                <p>Обжарка: @product.DegreeOfRoast</p>
+                <p>Регион: @product.Region</p>
+            }
+            else
+            {
+                <p>Тип: @product.SubType</p>
+            }
+            
+            <button @onclick="() => AddToBasket(product.Id)">
+                Добавить в корзину
+            </button>
+        </div>
+    }
+</div>
+
+@code {
+    private Basket _basket = new();
+    private string _selectedCategory = "Зерна кофе";
+    
+    private CoffeeFilter _coffeeFilter = new();
+    private AccessoryFilter _accessoryFilter = new();
+
+    private class CoffeeFilter
+    {
+        public string Type { get; set; } = "";
+        public string Roast { get; set; } = "";
+        public string Region { get; set; } = "";
+    }
+
+    private class AccessoryFilter
+    {
+        public string Type { get; set; } = "";
+    }
+
+    private IEnumerable<Product> FilteredProducts
+    {
+        get
+        {
+            // Убрана фильтрация по категории - теперь показываются все товары
+            var products = ef.Products.AsQueryable();
+            
+            // Применяем фильтры только если выбрана соответствующая категория
+            if (_selectedCategory == "Зерна кофе")
+            {
+                if (!string.IsNullOrEmpty(_coffeeFilter.Type))
+                    products = products.Where(p => p.SubType == _coffeeFilter.Type);
+                
+                if (!string.IsNullOrEmpty(_coffeeFilter.Roast))
+                    products = products.Where(p => p.DegreeOfRoast == _coffeeFilter.Roast);
+                
+                if (!string.IsNullOrEmpty(_coffeeFilter.Region))
+                    products = products.Where(p => p.Region == _coffeeFilter.Region);
+            }
+            else if (_selectedCategory == "Аксессуары")
+            {
+                if (!string.IsNullOrEmpty(_accessoryFilter.Type))
+                    products = products.Where(p => p.SubType == _accessoryFilter.Type);
+            }
+            
+            return products.ToList();
+        }
+    }
+
+    // Обозначение фильтра для кофе
+    private void SetCoffeeFilterType(string type)
+    {
+        _coffeeFilter.Type = type;
+    }
+
+    private void SetCoffeeFilterRoast(string roast)
+    {
+        _coffeeFilter.Roast = roast;
+    }
+
+    private void SetCoffeeFilterRegion(string region)
+    {
+        _coffeeFilter.Region = region;
+    }
+
+    // Обозначение фильтра для аксессуаров
+    private void SetAccessoryFilterType(string type)
+    {
+        _accessoryFilter.Type = type;
+    }
+    
+    // Добавление в корзину
+    private void AddToBasket(int productId)
+    {
+        var product = ef.Products.FirstOrDefault(x => x.Id == productId);
+        
+        if (product != null)
+        {
+            _basket = new Basket
+            {
+                Id = product.Id,
+                BasketTittle = product.Tittle,
+                BasketPhotoLink = product.PhotoLink,
+                BasketType = product.Type,
+                BasketCount = product.Count,
+                BasketPrice = product.Price,
+                BasketDegreeOfRoast = product.DegreeOfRoast,
+                BasketRegion = product.Region
+            };
+            
+            ef.Add(_basket);
+            ef.SaveChanges();
+        }
+    }
+    private void FixSelectAcces()
+    {
+        SetAccessoryFilterType("");
+    }
+    private void FixSetCoffeeRoast()
+    {
+        SetCoffeeFilterRoast("");
+    }
+    private void FixSetCoffeeType()
+    {
+        SetCoffeeFilterType("");
+    }
+    private void FixSetCoffeeRegion()
+    {
+        SetCoffeeFilterRegion("");
+    }
+}

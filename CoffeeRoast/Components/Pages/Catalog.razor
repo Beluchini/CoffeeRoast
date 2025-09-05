@@ -27,29 +27,56 @@
     <div class="filters">
         <h3>Фильтры:</h3>
         
-        <select @bind="_coffeeFilter.Type">
-            <option value="">Все типы кофе</option>
-            @foreach (var type in new[] { "Арабика", "Робуста", "Купажи", "Specialty" })
-            {
-                <option value="@type">@type</option>
-            }
-        </select>
+        <div class="filter-group">
+            <h4>Тип кофе:</h4>
+            <div class="filter-buttons">
+                <button class="@(_coffeeFilter.Type == "" ? "active" : "")" 
+                        @onclick="() => FixSetCoffeeType()">
+                    Все типы
+                </button>
+                @foreach (var type in new[] { "Арабика", "Робуста", "Купажи", "Specialty" })
+                {
+                    <button class="@(_coffeeFilter.Type == type ? "active" : "")" 
+                            @onclick="() => SetCoffeeFilterType(type)">
+                        @type
+                    </button>
+                }
+            </div>
+        </div>
 
-        <select @bind="_coffeeFilter.Roast">
-            <option value="">Все степени обжарки</option>
-            @foreach (var roast in new[] { "Светлая", "Средняя", "Тёмная" })
-            {
-                <option value="@roast">@roast</option>
-            }
-        </select>
+        <div class="filter-group">
+            <h4>Степень обжарки:</h4>
+            <div class="filter-buttons">
+                <button class="@(_coffeeFilter.Roast == "" ? "active" : "")" 
+                        @onclick="() => FixSetCoffeeRoast()">
+                    Все обжарки
+                </button>
+                @foreach (var roast in new[] { "Светлая", "Средняя", "Тёмная" })
+                {
+                    <button class="@(_coffeeFilter.Roast == roast ? "active" : "")" 
+                            @onclick="() => SetCoffeeFilterRoast(roast)">
+                        @roast
+                    </button>
+                }
+            </div>
+        </div>
 
-        <select @bind="_coffeeFilter.Region">
-            <option value="">Все регионы</option>
-            @foreach (var region in new[] { "Америка", "Африка", "Азия" })
-            {
-                <option value="@region">@region</option>
-            }
-        </select>
+        <div class="filter-group">
+            <h4>Регион:</h4>
+            <div class="filter-buttons">
+                <button class="@(_coffeeFilter.Region == "" ? "active" : "")" 
+                        @onclick="() => FixSetCoffeeRegion()">
+                    Все регионы
+                </button>
+                @foreach (var region in new[] { "Америка", "Африка", "Азия" })
+                {
+                    <button class="@(_coffeeFilter.Region == region ? "active" : "")" 
+                            @onclick="() => SetCoffeeFilterRegion(region)">
+                        @region
+                    </button>
+                }
+            </div>
+        </div>
     </div>
 }
 
@@ -59,13 +86,22 @@
     <div class="filters">
         <h3>Фильтры:</h3>
         
-        <select @bind="_accessoryFilter.Type">
-            <option value="">Все типы аксессуаров</option>
-            @foreach (var type in new[] { "Турки", "Френч-прессы", "Фильтры", "Кружки", "Кофемолки" })
-            {
-                <option value="@type">@type</option>
-            }
-        </select>
+        <div class="filter-group">
+            <h4>Тип аксессуаров:</h4>
+            <div class="filter-buttons">
+                <button class="@(_accessoryFilter.Type == "" ? "active" : "")" 
+                        @onclick="() => FixSelectAcces()">
+                    Все аксессуары
+                </button>
+                @foreach (var type in new[] { "Турки", "Френч-прессы", "Фильтры", "Кружки", "Кофемолки" })
+                {
+                    <button class="@(_accessoryFilter.Type == type ? "active" : "")" 
+                            @onclick="() => SetAccessoryFilterType(type)">
+                        @type
+                    </button>
+                }
+            </div>
+        </div>
     </div>
 }
 
@@ -97,8 +133,6 @@
     }
 </div>
 
-<!-- @product.Count @(product.Type == "Зерна кофе" ? "г" : "шт") граммы и штуки -->
-
 @code {
     private Basket _basket = new();
     private string _selectedCategory = "Зерна кофе";
@@ -117,7 +151,7 @@
     {
         public string Type { get; set; } = "";
     }
-    //Перечисления для фильтров
+
     private IEnumerable<Product> FilteredProducts
     {
         get
@@ -151,6 +185,28 @@
         _coffeeFilter = new CoffeeFilter();
         _accessoryFilter = new AccessoryFilter();
     }
+
+    // Методы для установки фильтров кофе
+    private void SetCoffeeFilterType(string type)
+    {
+        _coffeeFilter.Type = type;
+    }
+
+    private void SetCoffeeFilterRoast(string roast)
+    {
+        _coffeeFilter.Roast = roast;
+    }
+
+    private void SetCoffeeFilterRegion(string region)
+    {
+        _coffeeFilter.Region = region;
+    }
+
+    // Метод для установки фильтра аксессуаров
+    private void SetAccessoryFilterType(string type)
+    {
+        _accessoryFilter.Type = type;
+    }
     
     // Добавление в корзину
     private void AddToBasket(int productId)
@@ -176,7 +232,6 @@
         }
     }
     
-    //Для фикса ошибки
     private void SelectCoffeeCategory()
     {
         SelectCategory("Зерна кофе");
@@ -185,5 +240,22 @@
     private void SelectAccesosaryCategory()
     {
         SelectCategory("Аксессуары");
+    }
+
+    private void FixSelectAcces()
+    {
+        SetAccessoryFilterType("");
+    }
+    private void FixSetCoffeeRoast()
+    {
+        SetCoffeeFilterRoast("");
+    }
+    private void FixSetCoffeeType()
+    {
+        SetCoffeeFilterType("");
+    }
+    private void FixSetCoffeeRegion()
+    {
+        SetCoffeeFilterRegion("");
     }
 }
