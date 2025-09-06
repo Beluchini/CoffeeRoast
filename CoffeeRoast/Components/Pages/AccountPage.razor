@@ -1,6 +1,4 @@
-@page "/AccountPage"
-
-@page "/account"
+@page "/accountpage"
 @using CoffeeRoast.Database
 @using CoffeeRoast.Models
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
@@ -14,116 +12,123 @@
 
     @if (!string.IsNullOrEmpty(_message))
     {
-        <div class="notification @(_isError ? "error" : "success")">
-            @_message
-        </div>
+    <div class="notification @(_isError ? "error" : "success")">
+        @_message
+    </div>
     }
 
     @if (_currentUser == null)
     {
-        <div class="auth-notification">
-            <p>Пожалуйста, войдите в систему</p>
-            <button @onclick="GoToLogin">Войти</button>
-        </div>
+    <div class="auth-notification">
+        <p>Пожалуйста, войдите в систему</p>
+        <button @onclick="GoToLogin">Войти</button>
+    </div>
     }
     else
     {
-        <div class="account-content">
-            <!-- Информация пользователя -->
-            <div class="user-info-section">
-                <h3>Личная информация</h3>
-                <EditForm Model="_editUser" OnValidSubmit="SaveUserInfo">
-                    <DataAnnotationsValidator />
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Имя:</label>
-                            <InputText @bind-Value="_editUser.Name" class="form-control" />
-                            <ValidationMessage For="@(() => _editUser.Name)" />
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>Фамилия:</label>
-                            <InputText @bind-Value="_editUser.LastName" class="form-control" />
-                            <ValidationMessage For="@(() => _editUser.LastName)" />
-                        </div>
+    <div class="account-content">
+        <!-- Информация пользователя -->
+        <div class="user-info-section">
+            <h3>Личная информация</h3>
+            <EditForm Model="_editUser" OnValidSubmit="SaveUserInfo">
+                <DataAnnotationsValidator />
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Имя:</label>
+                        <InputText @bind-Value="_editUser.Name" class="form-control" />
+                        <ValidationMessage For="@(() => _editUser.Name)" />
                     </div>
 
                     <div class="form-group">
-                        <label>Отчество:</label>
-                        <InputText @bind-Value="_editUser.MiddleName" class="form-control" />
+                        <label>Фамилия:</label>
+                        <InputText @bind-Value="_editUser.LastName" class="form-control" />
+                        <ValidationMessage For="@(() => _editUser.LastName)" />
                     </div>
+                </div>
 
-                    <div class="form-group">
-                        <label>Email:</label>
-                        <InputText @bind-Value="_editUser.Email" class="form-control" />
-                        <ValidationMessage For="@(() => _editUser.Email)" />
-                    </div>
+                <div class="form-group">
+                    <label>Отчество:</label>
+                    <InputText @bind-Value="_editUser.MiddleName" class="form-control" />
+                </div>
 
-                    <div class="form-group">
-                        <label>Телефон:</label>
-                        <InputText @bind-Value="_editUser.PhoneNumber" class="form-control" placeholder="+7 XXX XXX XX XX" />
-                    </div>
+                <div class="form-group">
+                    <label>Email:</label>
+                    <InputText @bind-Value="_editUser.Email" class="form-control" />
+                    <ValidationMessage For="@(() => _editUser.Email)" />
+                </div>
 
-                    <div class="form-actions">
-                        <button type="submit" class="save-btn" disabled="@_isSaving">
-                            @(_isSaving ? "Сохранение..." : "Сохранить изменения")
-                        </button>
-                        <button type="button" @onclick="CancelEdit" class="cancel-btn">
-                            Отмена
-                        </button>
-                    </div>
-                </EditForm>
-            </div>
+                <div class="form-group">
+                    <label>Телефон:</label>
+                    <InputText @bind-Value="_editUser.PhoneNumber" class="form-control" placeholder="+7 XXX XXX XX XX" />
+                </div>
 
-            <!-- История заказов -->
-            <div class="orders-section">
-                <h3>История заказов</h3>
-                
-                @if (_userOrders.Any())
+                <div class="form-actions">
+                    <button type="submit" class="save-btn" disabled="@_isSaving">
+                        @(_isSaving ? "Сохранение..." : "Сохранить изменения")
+                    </button>
+                    <button type="button" @onclick="CancelEdit" class="cancel-btn">
+                        Отмена
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+
+        <!-- История заказов -->
+        <div class="orders-section">
+            <h3>Заказы</h3>
+
+            @if (_userOrders.Any())
+            {
+            <div class="orders-list">
+                @foreach (var order in _userOrders.OrderByDescending(o => o.OrderDate))
                 {
-                    <div class="orders-list">
-                        @foreach (var order in _userOrders.OrderByDescending(o => o.OrderDate))
-                        {
-                            <div class="order-card">
-                                <div class="order-header">
-                                    <h4>Заказ #@order.Id</h4>
-                                    <span class="order-date">
-                                        @order.OrderDate.ToString("dd.MM.yyyy") в @order.OrderTime.ToString(@"hh\:mm")
+                <div class="order-card">
+                    <div class="order-header">
+                        <h4>Заказ #@order.Id</h4>
+                        <span class="order-date">
+                                        @order.OrderDate.ToString("dd.MM.yyyy")
                                     </span>
-                                </div>
-                                
-                                <div class="order-details">
-                                    <p><strong>@order.OrderTittle</strong></p>
-                                    <p>Тип: @order.OrderType</p>
-                                    @if (!string.IsNullOrEmpty(order.OrderDegreeOfRoast))
-                                    {
-                                        <p>Обжарка: @order.OrderDegreeOfRoast</p>
-                                    }
-                                    @if (!string.IsNullOrEmpty(order.OrderRegion))
-                                    {
-                                        <p>Регион: @order.OrderRegion</p>
-                                    }
-                                    <p>Количество: @order.OrderCount шт.</p>
-                                    <p>Цена: @order.OrderPrice руб. за шт.</p>
-                                    <p class="order-total">Сумма: @(order.OrderPrice * order.OrderCount) руб.</p>
-                                    <p>Адрес доставки: @order.Addres</p>
-                                </div>
-                                
-                                <div class="order-status">
-                                    <span class="status-badge">Доставлен</span>
-                                </div>
-                            </div>
+                    </div>
+
+                    <div class="order-details">
+                        <p><strong>@order.OrderTittle</strong></p>
+                        <p>Тип: @order.OrderType</p>
+                        @if (!string.IsNullOrEmpty(order.OrderDegreeOfRoast))
+                        {
+                        <p>Обжарка: @order.OrderDegreeOfRoast</p>
+                        }
+                        @if (!string.IsNullOrEmpty(order.OrderRegion))
+                        {
+                        <p>Регион: @order.OrderRegion</p>
+                        }
+                        <p>Количество: @order.OrderCount шт.</p>
+                        <p>Цена: @order.OrderPrice руб. за шт.</p>
+                        <p class="order-total">Сумма: @(order.OrderPrice * order.OrderCount) руб.</p>
+                        <p>Адрес доставки: @order.Addres</p>
+                    </div>
+
+                    <div class="order-status">
+                        @if (DateTime.Today.Date != order.OrderDate)
+                        {
+                        <span class="status-badge">В пути</span>
+                        }
+                        else
+                        {
+                            <span class="status-badge">Доставлен</span>
                         }
                     </div>
-                }
-                else
-                {
-                    <p>У вас пока нет заказов</p>
-                    <button @onclick="GoToHome" class="shop-btn">Начать покупки</button>
+                </div>
                 }
             </div>
+            }
+            else
+            {
+            <p>У вас пока нет заказов</p>
+            <button @onclick="GoToHome" class="shop-btn">Начать покупки</button>
+            }
         </div>
+    </div>
     }
 </div>
 
@@ -150,10 +155,10 @@
             {
                 _currentUser = ef.Users
                     .FirstOrDefault(u => u.Id == result.Value);
-                
+
                 if (_currentUser != null)
                 {
-                    // Копируем данные для редактирования
+// Копируем данные для редактирования
                     _editUser = new User
                     {
                         Id = _currentUser.Id,
@@ -164,7 +169,7 @@
                         PhoneNumber = _currentUser.PhoneNumber
                     };
 
-                    // Загружаем заказы пользователя
+// Загружаем заказы пользователя
                     _userOrders = ef.Orders
                         .Where(o => o.UserId == _currentUser.Id)
                         .ToList();
@@ -180,17 +185,17 @@
     private async Task SaveUserInfo()
     {
         _isSaving = true;
-        
+
         try
         {
-            // Проверяем, не занят ли email другим пользователем
+// Проверяем, не занят ли email другим пользователем
             if (ef.Users.Any(u => u.Email == _editUser.Email && u.Id != _currentUser.Id))
             {
                 ShowMessage("Этот email уже используется другим пользователем", true);
                 return;
             }
 
-            // Обновляем данные пользователя
+// Обновляем данные пользователя
             var user = ef.Users.FirstOrDefault(u => u.Id == _currentUser.Id);
             if (user != null)
             {
@@ -201,10 +206,10 @@
                 user.PhoneNumber = _editUser.PhoneNumber;
 
                 await ef.SaveChangesAsync();
-                
-                // Обновляем текущего пользователя
+
+// Обновляем текущего пользователя
                 _currentUser = user;
-                
+
                 ShowMessage("Данные успешно сохранены");
             }
         }
@@ -220,7 +225,7 @@
 
     private void CancelEdit()
     {
-        // Восстанавливаем оригинальные данные
+// Восстанавливаем оригинальные данные
         _editUser = new User
         {
             Id = _currentUser.Id,
@@ -237,8 +242,8 @@
         _message = message;
         _isError = isError;
         StateHasChanged();
-        
-        // Автоскрытие сообщения
+
+// Автоскрытие сообщения
         if (!isError)
         {
             Task.Delay(3000).ContinueWith(_ =>
@@ -261,4 +266,5 @@
     {
         NavigationManager.NavigateTo("/");
     }
+
 }

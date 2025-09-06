@@ -91,7 +91,6 @@ namespace CoffeeRoast.Database.Migrations
                     OrderPrice = table.Column<decimal>(type: "TEXT", nullable: false),
                     OrderCount = table.Column<int>(type: "INTEGER", nullable: false),
                     OrderDate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    OrderTime = table.Column<TimeSpan>(type: "TEXT", nullable: false),
                     UserId = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>

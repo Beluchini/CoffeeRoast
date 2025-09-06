@@ -7,7 +7,7 @@
 
 <EditForm FormName="formAddItem" Model="_product" OnValidSubmit="@Submit">
     <DataAnnotationsValidator></DataAnnotationsValidator>
-    <p>Название товара</p>
+    <p>Название товара (если кофе, то после запятой пишите граммы)</p>
     <input type="text" @bind="_product.Tittle"/>
     <p>Ссылка на изображение</p>
     <input type="text" @bind="_product.PhotoLink"/>

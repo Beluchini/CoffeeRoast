@@ -2,7 +2,6 @@
 @using CoffeeRoast.Database
 @using CoffeeRoast.Models
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
-@using Microsoft.AspNetCore.Components.Forms
 @rendermode InteractiveServer
 @inject CoffeeContext ef
 @inject ProtectedLocalStorage ProtectedLocalStore
@@ -93,12 +92,6 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Время заказа (ЧЧ:MM):</label>
-                    <InputText @bind-Value="_orderTimeString" class="form-control" placeholder="12:30" />
-                    <ValidationMessage For="@(() => _orderTimeString)"/>
-                </div>
-
-                <div class="form-group">
                     <label>Адрес доставки:</label>
                     <InputText @bind-Value="_order.Addres" class="form-control"/>
                     <ValidationMessage For="@(() => _order.Addres)"/>
@@ -120,7 +113,6 @@
     private string _message = "";
     private bool _isError = false;
     private bool _isSubmitting = false;
-    private string _orderTimeString = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -218,14 +210,6 @@
     {
         _isSubmitting = true;
 
-        if (!TimeSpan.TryParse(_orderTimeString, out var time))
-        {
-            ShowMessage("Неверный формат времени. Используйте ЧЧ:MM", true);
-            _isSubmitting = false;
-            return;
-        }
-        _order.OrderTime = time;
-        
         try
         {
             if (_currentUser == null || !_userBasketItems.Any())
@@ -253,7 +237,6 @@
                     OrderCount = basketItem.BasketCount,
                     OrderPrice = basketItem.BasketPrice,
                     OrderDate = _order.OrderDate,
-                    OrderTime = _order.OrderTime,
                     Addres = _order.Addres,
                     UserId = _currentUser.Id
                 };
@@ -270,7 +253,6 @@
             // Обновляем список
             _userBasketItems = new List<Basket>();
             _order = new Order();
-            _orderTimeString = "";
 
             ShowMessage("Заказ успешно оформлен! Спасибо за покупку!");
         }
@@ -300,4 +282,5 @@
     {
         NavigationManager.NavigateTo("/");
     }
+
 }

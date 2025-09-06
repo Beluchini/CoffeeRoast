@@ -14,7 +14,6 @@ public class Order
     public decimal OrderPrice { get; set; }
     public int OrderCount { get; set; }
     public DateTime OrderDate { get; set; }
-    public TimeSpan OrderTime { get; set; }
     
     public int UserId { get; set; }
     public User User { get; set; }

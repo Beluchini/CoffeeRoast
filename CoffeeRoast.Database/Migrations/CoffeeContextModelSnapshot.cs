@@ -86,9 +86,6 @@ namespace CoffeeRoast.Database.Migrations
                     b.Property<string>("OrderRegion")
                         .HasColumnType("TEXT");
 
-                    b.Property<TimeSpan>("OrderTime")
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("OrderTittle")
                         .IsRequired()
                         .HasColumnType("TEXT");
