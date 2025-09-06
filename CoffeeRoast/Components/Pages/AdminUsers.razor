@@ -1,6 +1,38 @@
 @page "/AdminUsers"
-<h3>AdminUsers</h3>
+@using CoffeeRoast.Database
+@using CoffeeRoast.Models
+@rendermode InteractiveServer
+@inject CoffeeContext ef
+
+<h3>Управление товарами</h3>
+
+<div class="products-grid">
+    @foreach (var user in ef.Users.ToList())
+    {
+        <div class="product-card">
+            @user.Name
+            @user.LastName
+            @user.MiddleName
+            @user.Email
+            @user.Id
+            <button @onclick="() => DeleteProduct(user.Id)" class="btn btn-danger">
+                Удалить
+            </button>
+        </div>
+    }
+</div>
 
 @code {
-    
+
+    private void DeleteProduct(int userId)
+    {
+        var user = ef.Users.FirstOrDefault(p => p.Id == userId);
+        if (user != null)
+        {
+            ef.Users.Remove(user);
+            ef.SaveChanges();
+            StateHasChanged();
+        }
+    }
+
 }

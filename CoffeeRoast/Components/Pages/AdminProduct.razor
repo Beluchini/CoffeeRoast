@@ -1,0 +1,47 @@
+@page "/AdminProduct"
+@using CoffeeRoast.Database
+@using CoffeeRoast.Models
+@rendermode InteractiveServer
+@inject CoffeeContext ef
+
+<h3>Управление товарами</h3>
+
+<div class="products-grid">
+    @foreach (var product in ef.Products.ToList())
+    {
+        <div class="product-card">
+            <img src="@product.PhotoLink" alt="@product.Tittle"/>
+            <h3>@product.Tittle</h3>
+            <p>@product.Description</p>
+            <p>Цена: @product.Price руб.</p>
+
+            @if (product.Type == "Зерна кофе")
+            {
+                <p>Тип: @product.SubType</p>
+                <p>Обжарка: @product.DegreeOfRoast</p>
+                <p>Регион: @product.Region</p>
+            }
+            else
+            {
+                <p>Тип: @product.SubType</p>
+            }
+
+            <button @onclick="() => DeleteProduct(product.Id)" class="btn btn-danger">
+                Удалить
+            </button>
+        </div>
+    }
+</div>
+
+@code {
+    private void DeleteProduct(int productId)
+    {
+        var product = ef.Products.FirstOrDefault(p => p.Id == productId);
+        if (product != null)
+        {
+            ef.Products.Remove(product);
+            ef.SaveChanges();
+            StateHasChanged();
+        }
+    }
+}
