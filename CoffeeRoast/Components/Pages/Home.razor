@@ -517,7 +517,7 @@
                 UserId = _currentUser.Id // Добавляем привязку к пользователю
             };
 
-            ef.Add(_basket);
+            ef.Baskets.Add(_basket);
             await ef.SaveChangesAsync();
 
             // Показываем сообщение об успешном добавлении

@@ -13,4 +13,5 @@ public class Basket
     public decimal BasketPrice { get; set; }
     public int BasketCount { get; set; }
     public int UserId { get; set; }
+    public User User { get; set; }
 }

@@ -1,59 +1,254 @@
 @page "/BasketPage"
 @using CoffeeRoast.Database
 @using CoffeeRoast.Models
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using Microsoft.AspNetCore.Components.Forms
 @rendermode InteractiveServer
 @inject CoffeeContext ef
+@inject ProtectedLocalStorage ProtectedLocalStore
+@inject NavigationManager NavigationManager
+
 <div>
-    <div>
-        @foreach (var item in ef.Baskets.ToList())
-        {
-        <div>
-            @item.BasketTittle
-            <img style="width: 100px; height: 100px" src="@item.BasketPhotoLink"/>
-            @item.BasketType
-            @item.BasketDegreeOfRoast
-            @item.BasketRegion
-            @item.BasketCount
-            @item.BasketPrice
+    <h2>Моя корзина</h2>
+
+    @if (!string.IsNullOrEmpty(_message))
+    {
+        <div class="notification @(_isError ? "error" : "success")">
+            @_message
+            <!--<button @onclick="() => _message = """>✕</button>-->
         </div>
-        }
-    </div>
-    <div>
-        <EditForm FormName="formAddItem" Model="_order" OnValidSubmit="@Submit">
-            <DataAnnotationsValidator></DataAnnotationsValidator>
-            <input type="date" @bind="_order.OrderDate"/>
-            <input type="datetime" @bind="_order.OrderTime"/>
-            <input type="text" @bind="_order.Addres"/>
-            <button type="submit">Заказать</button>
-        </EditForm>
-    </div>
+    }
+
+    @if (_currentUser == null)
+    {
+        <div class="auth-notification">
+            <p>Пожалуйста, войдите в систему чтобы просмотреть корзину</p>
+            <button @onclick="GoToLogin">Войти</button>
+        </div>
+    }
+    else if (!_userBasketItems.Any())
+    {
+        <p>Ваша корзина пуста</p>
+        <button @onclick="GoToHome">Вернуться к покупкам</button>
+    }
+    else
+    {
+        <div class="basket-items">
+            <h3>Товары в корзине (@_userBasketItems.Count)</h3>
+            @foreach (var item in _userBasketItems)
+            {
+                <div class="basket-item">
+                    <img style="width: 100px; height: 100px" src="@item.BasketPhotoLink" alt="@item.BasketTittle"/>
+                    <div class="item-details">
+                        <h4>@item.BasketTittle</h4>
+                        <p>Тип: @item.BasketType</p>
+                        @if (!string.IsNullOrEmpty(item.BasketDegreeOfRoast))
+                        {
+                            <p>Обжарка: @item.BasketDegreeOfRoast</p>
+                        }
+                        @if (!string.IsNullOrEmpty(item.BasketRegion))
+                        {
+                            <p>Регион: @item.BasketRegion</p>
+                        }
+                        <p>Количество: @item.BasketCount</p>
+                        <p>Цена: @(item.BasketPrice * item.BasketCount) руб.</p>
+                    </div>
+                    <button @onclick="() => RemoveFromBasket(item.Id)" class="remove-btn">
+                        Удалить
+                    </button>
+                </div>
+            }
+
+            <div class="total-section">
+                <h3>Итого: @_userBasketItems.Sum(item => item.BasketPrice * item.BasketCount) руб.</h3>
+            </div>
+        </div>
+
+        <div class="order-section">
+            <h3>Оформление заказа</h3>
+            <EditForm Model="_order" OnValidSubmit="SubmitOrder">
+                <DataAnnotationsValidator/>
+
+                <div class="form-group">
+                    <label>Дата заказа:</label>
+                    <InputDate @bind-Value="_order.OrderDate" class="form-control"/>
+                    <ValidationMessage For="@(() => _order.OrderDate)"/>
+                </div>
+
+                <div class="form-group">
+                    <label>Время заказа:</label>
+                    <InputText @bind-Value="_orderTimeString" class="form-control" placeholder="12:30" />
+                </div>
+
+                <div class="form-group">
+                    <label>Адрес доставки:</label>
+                    <InputText @bind-Value="_order.Addres" class="form-control"/>
+                    <ValidationMessage For="@(() => _order.Addres)"/>
+                </div>
+
+                <button type="submit" class="order-btn" disabled="@_isSubmitting">
+                    @(_isSubmitting ? "Оформляем..." : "Оформить заказ")
+                </button>
+            </EditForm>
+        </div>
+    }
 </div>
 
-
 @code {
-    private Basket _selectedbasket;
+    private const string USER_STORAGE_KEY = "currentUserId";
+    private User _currentUser;
+    private List<Basket> _userBasketItems = new List<Basket>();
     private Order _order = new Order();
+    private string _message = "";
+    private bool _isError = false;
+    private bool _isSubmitting = false;
+    private string _orderTimeString = "";
 
-    private void AddToOrder(int basketId)
+    protected override async Task OnInitializedAsync()
     {
-        _selectedbasket = ef.Baskets.FirstOrDefault(p => p.Id == basketId);
-        _order.Id = basketId;
-        _order.OrderTittle = _selectedbasket.BasketTittle;
-        _order.OrderPhotoLink = _selectedbasket.BasketPhotoLink;
-        _order.OrderType = _selectedbasket.BasketType;
-        _order.OrderDegreeOfRoast = _selectedbasket.BasketDegreeOfRoast;
-        _order.OrderRegion = _selectedbasket.BasketRegion;
-        _order.OrderCount = _selectedbasket.BasketCount;
-        _order.OrderPrice = _selectedbasket.BasketPrice;
-        ef.Add(_order);
-        ef.SaveChanges();
-        _order = new Order();
+        await LoadUserData();
     }
-    
-    private void Submit(EditContext arg)
+
+    private async Task LoadUserData()
     {
-        ef.Add(_order);
-        ef.SaveChanges();
-        _order = new Order();
+        try
+        {
+            var result = await ProtectedLocalStore.GetAsync<int>(USER_STORAGE_KEY);
+            if (result.Success && result.Value > 0)
+            {
+                _currentUser = ef.Users.FirstOrDefault(u => u.Id == result.Value);
+                if (_currentUser != null)
+                {
+                    await LoadBasketItems();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowMessage("Ошибка загрузки данных", true);
+        }
     }
+
+    private async Task LoadBasketItems()
+    {
+        try
+        {
+            _userBasketItems = ef.Baskets
+                .Where(b => b.UserId == _currentUser.Id)
+                .ToList();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            ShowMessage("Ошибка загрузки корзины", true);
+        }
+    }
+
+    private async Task RemoveFromBasket(int basketId)
+    {
+        try
+        {
+            var item = ef.Baskets.FirstOrDefault(b => b.Id == basketId);
+            if (item != null && item.UserId == _currentUser.Id)
+            {
+                ef.Baskets.Remove(item);
+                await ef.SaveChangesAsync();
+                await LoadBasketItems();
+                ShowMessage("Товар удален из корзины");
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowMessage("Ошибка удаления товара", true);
+        }
+    }
+
+    private async Task SubmitOrder()
+    {
+        _isSubmitting = true;
+
+        if (TimeSpan.TryParse(_orderTimeString, out var time))
+        {
+            _order.OrderTime = time;
+        }
+        else
+        {
+            ShowMessage("Неверный формат времени. Используйте ЧЧ:MM", true);
+            return;
+        }
+        
+        try
+        {
+            if (_currentUser == null || !_userBasketItems.Any())
+            {
+                ShowMessage("Корзина пуста или пользователь не авторизован", true);
+                return;
+            }
+
+            if (string.IsNullOrEmpty(_order.Addres) || _order.OrderDate == default)
+            {
+                ShowMessage("Заполните все обязательные поля", true);
+                return;
+            }
+
+// Создаем заказ для каждого товара в корзине
+            foreach (var basketItem in _userBasketItems)
+            {
+                var order = new Order
+                {
+                    OrderTittle = basketItem.BasketTittle,
+                    OrderPhotoLink = basketItem.BasketPhotoLink,
+                    OrderType = basketItem.BasketType,
+                    OrderDegreeOfRoast = basketItem.BasketDegreeOfRoast,
+                    OrderRegion = basketItem.BasketRegion,
+                    OrderCount = basketItem.BasketCount,
+                    OrderPrice = basketItem.BasketPrice,
+                    OrderDate = _order.OrderDate,
+                    OrderTime = _order.OrderTime,
+                    Addres = _order.Addres,
+                    UserId = _currentUser.Id
+                };
+
+                ef.Orders.Add(order);
+            }
+
+// Очищаем корзину пользователя
+            var userBasketItems = ef.Baskets.Where(b => b.UserId == _currentUser.Id).ToList();
+            ef.Baskets.RemoveRange(userBasketItems);
+
+            await ef.SaveChangesAsync();
+
+// Обновляем список
+            _userBasketItems = new List<Basket>();
+            _order = new Order();
+
+            ShowMessage("Заказ успешно оформлен! Спасибо за покупку!");
+        }
+        catch (Exception ex)
+        {
+            ShowMessage($"Ошибка оформления заказа: {ex.Message}", true);
+        }
+        finally
+        {
+            _isSubmitting = false;
+        }
+    }
+
+    private void ShowMessage(string message, bool isError = false)
+    {
+        _message = message;
+        _isError = isError;
+        StateHasChanged();
+    }
+
+    private void GoToLogin()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+
+    private void GoToHome()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+
 }

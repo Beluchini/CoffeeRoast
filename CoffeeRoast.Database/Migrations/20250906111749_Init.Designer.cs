@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CoffeeRoast.Database.Migrations
 {
     [DbContext(typeof(CoffeeContext))]
-    [Migration("20250906083559_Init")]
+    [Migration("20250906111749_Init")]
     partial class Init
     {
         /// <inheritdoc />
@@ -55,6 +55,8 @@ namespace CoffeeRoast.Database.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("UserId");
+
                     b.ToTable("Baskets");
                 });
 
@@ -77,10 +79,6 @@ namespace CoffeeRoast.Database.Migrations
                     b.Property<string>("OrderDegreeOfRoast")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("OrderEmail")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("OrderPhotoLink")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -91,7 +89,7 @@ namespace CoffeeRoast.Database.Migrations
                     b.Property<string>("OrderRegion")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("OrderTime")
+                    b.Property<TimeSpan>("OrderTime")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("OrderTittle")
@@ -102,7 +100,12 @@ namespace CoffeeRoast.Database.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Orders");
                 });
@@ -183,6 +186,28 @@ namespace CoffeeRoast.Database.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("CoffeeRoast.Models.Basket", b =>
+                {
+                    b.HasOne("CoffeeRoast.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("CoffeeRoast.Models.Order", b =>
+                {
+                    b.HasOne("CoffeeRoast.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 #pragma warning restore 612, 618
         }
