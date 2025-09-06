@@ -286,3 +286,22 @@ button:disabled {
         top: 70px;
     }
 }
+.auth-buttons-header {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.basket-btn {
+    background-color: #4CAF50;
+    color: #000000;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.basket-btn:hover {
+    background-color: #45a049;
+}

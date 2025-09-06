@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CoffeeRoast.Database.Migrations
 {
     [DbContext(typeof(CoffeeContext))]
-    [Migration("20250905142544_Init")]
+    [Migration("20250906083559_Init")]
     partial class Init
     {
         /// <inheritdoc />

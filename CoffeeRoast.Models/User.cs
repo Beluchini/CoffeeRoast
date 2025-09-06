@@ -16,7 +16,7 @@ public class User
     public string LastName { get; set; }
     
     [Required(ErrorMessage = "Пароль обязателен")]
-    [MinLength(6, ErrorMessage = "Пароль должен содержать минимум 6 символов")]
+    [MinLength(8, ErrorMessage = "Пароль должен содержать минимум 8 символов")]
     public string Password { get; set; }
     
     [Required(ErrorMessage = "Email обязателен")]

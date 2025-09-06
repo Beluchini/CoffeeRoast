@@ -3,10 +3,14 @@
 @using CoffeeRoast.Models
 @rendermode InteractiveServer
 @inject CoffeeContext ef
+@inject NavigationManager NavigationManager
+
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@inject ProtectedLocalStorage ProtectedLocalStore
 
 <PageTitle>Главная - CoffeeRoast</PageTitle>
 
-<!-- Модальное окно для регистрации/входа -->
+<!-- Окно для регистрации/входа -->
 @if (_showAuthModal)
 {
     <div class="auth-modal">
@@ -48,13 +52,16 @@
     <div class="auth-buttons-header">
         @if (_currentUser != null)
         {
-            <span>Добро пожаловать, @_currentUser.Name!</span>
-            <button @onclick="Logout">Выйти</button>
+        <span>Добро пожаловать, @_currentUser.Name!</span>
+        <button @onclick="GoToBasket" class="basket-btn">
+            Перейти в корзину
+        </button>
+        <button @onclick="Logout">Выйти</button>
         }
         else
         {
-            <button @onclick="() => ShowAuthModal(true)">Войти</button>
-            <button @onclick="() => ShowAuthModal(false)">Регистрация</button>
+        <button @onclick="() => ShowAuthModal(true)">Войти</button>
+        <button @onclick="() => ShowAuthModal(false)">Регистрация</button>
         }
     </div>
 </div>
@@ -197,6 +204,7 @@
 </div>
 
 @code {
+    private const string USER_STORAGE_KEY = "currentUserId";
     private Basket _basket = new();
     private string _selectedCategory = "Все товары";
 
@@ -228,10 +236,20 @@
         public string Type { get; set; } = "";
     }
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-// Проверяем, есть ли сохраненный пользователь
-        _currentUser = null;
+        try
+        {
+            var result = await ProtectedLocalStore.GetAsync<int>(USER_STORAGE_KEY);
+            if (result.Success && result.Value > 0)
+            {
+                _currentUser = ef.Users.FirstOrDefault(u => u.Id == result.Value);
+            }
+        }
+        catch
+        {
+            // Игнорируем ошибки при чтении хранилища
+        }
     }
 
     private IEnumerable<Product> FilteredProducts
@@ -294,7 +312,7 @@
         _authMessage = "";
     }
 
-    private void HandleAuth()
+    private async Task HandleAuth()
     {
         if (string.IsNullOrEmpty(_currentEmail) || string.IsNullOrEmpty(_currentPassword))
         {
@@ -313,36 +331,34 @@
         }
     }
 
-    private void LoginUser()
+    private async Task LoginUser()
     {
         var user = ef.Users.FirstOrDefault(u => u.Email == _currentEmail && u.Password == _currentPassword);
 
         if (user != null)
         {
             _currentUser = user;
+        
+            // Сохраняем ID пользователя в локальное хранилище
+            await ProtectedLocalStore.SetAsync(USER_STORAGE_KEY, user.Id);
+        
             _authMessage = "Вход выполнен успешно!";
             _authIsError = false;
-            Task.Delay(1000).ContinueWith(_ =>
-            {
-                InvokeAsync(() =>
-                {
-                    _showAuthModal = false;
-                    StateHasChanged();
-                });
-            });
+        
+            await Task.Delay(1000);
+            _showAuthModal = false;
+            StateHasChanged();
         }
         else
         {
             _authMessage = "Неверный email или пароль";
             _authIsError = true;
         }
-
-        StateHasChanged();
     }
 
-    private void RegisterUser()
+    private async Task RegisterUser()
     {
-// Проверяем, нет ли уже пользователя с таким email
+         // Проверяем, нет ли уже пользователя с таким email
         if (ef.Users.Any(u => u.Email == _currentEmail))
         {
             _authMessage = "Пользователь с таким email уже существует";
@@ -351,7 +367,7 @@
             return;
         }
 
-// Валидация данных
+         // Валидация данных
         if (string.IsNullOrEmpty(_registerUser.Name) || string.IsNullOrEmpty(_registerUser.LastName))
         {
             _authMessage = "Заполните имя и фамилию";
@@ -360,7 +376,7 @@
             return;
         }
 
-// Создаем нового пользователя
+        // Создаем нового пользователя
         var newUser = new User
         {
             Name = _registerUser.Name,
@@ -373,6 +389,8 @@
 
         ef.Users.Add(newUser);
         ef.SaveChanges();
+
+        await ProtectedLocalStore.SetAsync(USER_STORAGE_KEY, newUser.Id);
 
         _authMessage = "Регистрация прошла успешно!";
         _authIsError = false;
@@ -392,8 +410,10 @@
         StateHasChanged();
     }
 
-    private void Logout()
+    private async Task Logout()
     {
+        await ProtectedLocalStore.DeleteAsync(USER_STORAGE_KEY);
+        
         _currentUser = null;
         StateHasChanged();
     }
@@ -486,6 +506,12 @@
             StateHasChanged();
         }
     }
+    
+    private void GoToBasket()
+    {
+            // Навигация на страницу корзины
+            NavigationManager.NavigateTo("/basketpage");
+    }
 
     private void FixSelectAcces()
     {
@@ -521,5 +547,4 @@
     {
         SelectCategory("Все товары");
     }
-
 }
