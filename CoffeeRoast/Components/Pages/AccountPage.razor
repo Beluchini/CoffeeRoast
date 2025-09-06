@@ -1,6 +1,264 @@
 @page "/AccountPage"
-<h3>AccountPage</h3>
+
+@page "/account"
+@using CoffeeRoast.Database
+@using CoffeeRoast.Models
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@rendermode InteractiveServer
+@inject CoffeeContext ef
+@inject ProtectedLocalStorage ProtectedLocalStore
+@inject NavigationManager NavigationManager
+
+<div class="account-page">
+    <h2>Мой аккаунт</h2>
+
+    @if (!string.IsNullOrEmpty(_message))
+    {
+        <div class="notification @(_isError ? "error" : "success")">
+            @_message
+        </div>
+    }
+
+    @if (_currentUser == null)
+    {
+        <div class="auth-notification">
+            <p>Пожалуйста, войдите в систему</p>
+            <button @onclick="GoToLogin">Войти</button>
+        </div>
+    }
+    else
+    {
+        <div class="account-content">
+            <!-- Информация пользователя -->
+            <div class="user-info-section">
+                <h3>Личная информация</h3>
+                <EditForm Model="_editUser" OnValidSubmit="SaveUserInfo">
+                    <DataAnnotationsValidator />
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Имя:</label>
+                            <InputText @bind-Value="_editUser.Name" class="form-control" />
+                            <ValidationMessage For="@(() => _editUser.Name)" />
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Фамилия:</label>
+                            <InputText @bind-Value="_editUser.LastName" class="form-control" />
+                            <ValidationMessage For="@(() => _editUser.LastName)" />
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Отчество:</label>
+                        <InputText @bind-Value="_editUser.MiddleName" class="form-control" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Email:</label>
+                        <InputText @bind-Value="_editUser.Email" class="form-control" />
+                        <ValidationMessage For="@(() => _editUser.Email)" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Телефон:</label>
+                        <InputText @bind-Value="_editUser.PhoneNumber" class="form-control" placeholder="+7 XXX XXX XX XX" />
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="save-btn" disabled="@_isSaving">
+                            @(_isSaving ? "Сохранение..." : "Сохранить изменения")
+                        </button>
+                        <button type="button" @onclick="CancelEdit" class="cancel-btn">
+                            Отмена
+                        </button>
+                    </div>
+                </EditForm>
+            </div>
+
+            <!-- История заказов -->
+            <div class="orders-section">
+                <h3>История заказов</h3>
+                
+                @if (_userOrders.Any())
+                {
+                    <div class="orders-list">
+                        @foreach (var order in _userOrders.OrderByDescending(o => o.OrderDate))
+                        {
+                            <div class="order-card">
+                                <div class="order-header">
+                                    <h4>Заказ #@order.Id</h4>
+                                    <span class="order-date">
+                                        @order.OrderDate.ToString("dd.MM.yyyy") в @order.OrderTime.ToString(@"hh\:mm")
+                                    </span>
+                                </div>
+                                
+                                <div class="order-details">
+                                    <p><strong>@order.OrderTittle</strong></p>
+                                    <p>Тип: @order.OrderType</p>
+                                    @if (!string.IsNullOrEmpty(order.OrderDegreeOfRoast))
+                                    {
+                                        <p>Обжарка: @order.OrderDegreeOfRoast</p>
+                                    }
+                                    @if (!string.IsNullOrEmpty(order.OrderRegion))
+                                    {
+                                        <p>Регион: @order.OrderRegion</p>
+                                    }
+                                    <p>Количество: @order.OrderCount шт.</p>
+                                    <p>Цена: @order.OrderPrice руб. за шт.</p>
+                                    <p class="order-total">Сумма: @(order.OrderPrice * order.OrderCount) руб.</p>
+                                    <p>Адрес доставки: @order.Addres</p>
+                                </div>
+                                
+                                <div class="order-status">
+                                    <span class="status-badge">Доставлен</span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p>У вас пока нет заказов</p>
+                    <button @onclick="GoToHome" class="shop-btn">Начать покупки</button>
+                }
+            </div>
+        </div>
+    }
+</div>
 
 @code {
-    
+    private const string USER_STORAGE_KEY = "currentUserId";
+    private User _currentUser;
+    private User _editUser = new User();
+    private List<Order> _userOrders = new List<Order>();
+    private string _message = "";
+    private bool _isError = false;
+    private bool _isSaving = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUserData();
+    }
+
+    private async Task LoadUserData()
+    {
+        try
+        {
+            var result = await ProtectedLocalStore.GetAsync<int>(USER_STORAGE_KEY);
+            if (result.Success && result.Value > 0)
+            {
+                _currentUser = ef.Users
+                    .FirstOrDefault(u => u.Id == result.Value);
+                
+                if (_currentUser != null)
+                {
+                    // Копируем данные для редактирования
+                    _editUser = new User
+                    {
+                        Id = _currentUser.Id,
+                        Name = _currentUser.Name,
+                        LastName = _currentUser.LastName,
+                        MiddleName = _currentUser.MiddleName,
+                        Email = _currentUser.Email,
+                        PhoneNumber = _currentUser.PhoneNumber
+                    };
+
+                    // Загружаем заказы пользователя
+                    _userOrders = ef.Orders
+                        .Where(o => o.UserId == _currentUser.Id)
+                        .ToList();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowMessage("Ошибка загрузки данных", true);
+        }
+    }
+
+    private async Task SaveUserInfo()
+    {
+        _isSaving = true;
+        
+        try
+        {
+            // Проверяем, не занят ли email другим пользователем
+            if (ef.Users.Any(u => u.Email == _editUser.Email && u.Id != _currentUser.Id))
+            {
+                ShowMessage("Этот email уже используется другим пользователем", true);
+                return;
+            }
+
+            // Обновляем данные пользователя
+            var user = ef.Users.FirstOrDefault(u => u.Id == _currentUser.Id);
+            if (user != null)
+            {
+                user.Name = _editUser.Name;
+                user.LastName = _editUser.LastName;
+                user.MiddleName = _editUser.MiddleName;
+                user.Email = _editUser.Email;
+                user.PhoneNumber = _editUser.PhoneNumber;
+
+                await ef.SaveChangesAsync();
+                
+                // Обновляем текущего пользователя
+                _currentUser = user;
+                
+                ShowMessage("Данные успешно сохранены");
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowMessage("Ошибка сохранения данных", true);
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private void CancelEdit()
+    {
+        // Восстанавливаем оригинальные данные
+        _editUser = new User
+        {
+            Id = _currentUser.Id,
+            Name = _currentUser.Name,
+            LastName = _currentUser.LastName,
+            MiddleName = _currentUser.MiddleName,
+            Email = _currentUser.Email,
+            PhoneNumber = _currentUser.PhoneNumber
+        };
+    }
+
+    private void ShowMessage(string message, bool isError = false)
+    {
+        _message = message;
+        _isError = isError;
+        StateHasChanged();
+        
+        // Автоскрытие сообщения
+        if (!isError)
+        {
+            Task.Delay(3000).ContinueWith(_ =>
+            {
+                InvokeAsync(() =>
+                {
+                    _message = "";
+                    StateHasChanged();
+                });
+            });
+        }
+    }
+
+    private void GoToLogin()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+
+    private void GoToHome()
+    {
+        NavigationManager.NavigateTo("/");
+    }
 }

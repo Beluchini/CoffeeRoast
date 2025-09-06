@@ -15,7 +15,6 @@
     {
         <div class="notification @(_isError ? "error" : "success")">
             @_message
-            <!--<button @onclick="() => _message = """>✕</button>-->
         </div>
     }
 
@@ -50,8 +49,25 @@
                         {
                             <p>Регион: @item.BasketRegion</p>
                         }
-                        <p>Количество: @item.BasketCount</p>
-                        <p>Цена: @(item.BasketPrice * item.BasketCount) руб.</p>
+                        
+                        <div class="quantity-controls">
+                            <label>Количество:</label>
+                            <div class="quantity-buttons">
+                                <button @onclick="() => DecreaseQuantity(item)" 
+                                        class="quantity-btn" 
+                                        disabled="@(item.BasketCount <= 1)">
+                                    -
+                                </button>
+                                <span class="quantity-value">@item.BasketCount</span>
+                                <button @onclick="() => IncreaseQuantity(item)" 
+                                        class="quantity-btn">
+                                    +
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <p>Цена за шт: @item.BasketPrice руб.</p>
+                        <p class="item-total">Итого: @(item.BasketPrice * item.BasketCount) руб.</p>
                     </div>
                     <button @onclick="() => RemoveFromBasket(item.Id)" class="remove-btn">
                         Удалить
@@ -60,7 +76,8 @@
             }
 
             <div class="total-section">
-                <h3>Итого: @_userBasketItems.Sum(item => item.BasketPrice * item.BasketCount) руб.</h3>
+                <h3>Общая сумма: @_userBasketItems.Sum(item => item.BasketPrice * item.BasketCount) руб.</h3>
+                <p>Товаров: @_userBasketItems.Sum(item => item.BasketCount) шт.</p>
             </div>
         </div>
 
@@ -76,8 +93,9 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Время заказа:</label>
+                    <label>Время заказа (ЧЧ:MM):</label>
                     <InputText @bind-Value="_orderTimeString" class="form-control" placeholder="12:30" />
+                    <ValidationMessage For="@(() => _orderTimeString)"/>
                 </div>
 
                 <div class="form-group">
@@ -144,6 +162,39 @@
         }
     }
 
+    private async Task IncreaseQuantity(Basket item)
+    {
+        try
+        {
+            item.BasketCount++;
+            ef.Baskets.Update(item);
+            await ef.SaveChangesAsync();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            ShowMessage("Ошибка изменения количества", true);
+        }
+    }
+
+    private async Task DecreaseQuantity(Basket item)
+    {
+        try
+        {
+            if (item.BasketCount > 1)
+            {
+                item.BasketCount--;
+                ef.Baskets.Update(item);
+                await ef.SaveChangesAsync();
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowMessage("Ошибка изменения количества", true);
+        }
+    }
+
     private async Task RemoveFromBasket(int basketId)
     {
         try
@@ -167,15 +218,13 @@
     {
         _isSubmitting = true;
 
-        if (TimeSpan.TryParse(_orderTimeString, out var time))
-        {
-            _order.OrderTime = time;
-        }
-        else
+        if (!TimeSpan.TryParse(_orderTimeString, out var time))
         {
             ShowMessage("Неверный формат времени. Используйте ЧЧ:MM", true);
+            _isSubmitting = false;
             return;
         }
+        _order.OrderTime = time;
         
         try
         {
@@ -191,7 +240,7 @@
                 return;
             }
 
-// Создаем заказ для каждого товара в корзине
+            // Создаем заказ для каждого товара в корзине
             foreach (var basketItem in _userBasketItems)
             {
                 var order = new Order
@@ -212,15 +261,16 @@
                 ef.Orders.Add(order);
             }
 
-// Очищаем корзину пользователя
+            // Очищаем корзину пользователя
             var userBasketItems = ef.Baskets.Where(b => b.UserId == _currentUser.Id).ToList();
             ef.Baskets.RemoveRange(userBasketItems);
 
             await ef.SaveChangesAsync();
 
-// Обновляем список
+            // Обновляем список
             _userBasketItems = new List<Basket>();
             _order = new Order();
+            _orderTimeString = "";
 
             ShowMessage("Заказ успешно оформлен! Спасибо за покупку!");
         }
@@ -250,5 +300,4 @@
     {
         NavigationManager.NavigateTo("/");
     }
-
 }

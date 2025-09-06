@@ -58,6 +58,9 @@
 
         @if (_currentUser != null)
         {
+            <button @onclick="GoToAccount" class="account-btn">
+                Мой аккаунт
+            </button>
         <span>Добро пожовать, @_currentUser.Name!</span>
         <button @onclick="Logout">Выйти</button>
         }
@@ -531,7 +534,10 @@
             StateHasChanged();
         }
     }
-
+    private void GoToAccount()
+    {
+        NavigationManager.NavigateTo("/accountpage");
+    }
     private void FixSelectAcces()
     {
         SetAccessoryFilterType("");
