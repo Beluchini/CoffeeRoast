@@ -1,8 +1,59 @@
 @page "/BasketPage"
+@using CoffeeRoast.Database
 @using CoffeeRoast.Models
-
+@rendermode InteractiveServer
+@inject CoffeeContext ef
+<div>
+    <div>
+        @foreach (var item in ef.Baskets.ToList())
+        {
+        <div>
+            @item.BasketTittle
+            <img style="width: 100px; height: 100px" src="@item.BasketPhotoLink"/>
+            @item.BasketType
+            @item.BasketDegreeOfRoast
+            @item.BasketRegion
+            @item.BasketCount
+            @item.BasketPrice
+        </div>
+        }
+    </div>
+    <div>
+        <EditForm FormName="formAddItem" Model="_order" OnValidSubmit="@Submit">
+            <DataAnnotationsValidator></DataAnnotationsValidator>
+            <input type="date" @bind="_order.OrderDate"/>
+            <input type="datetime" @bind="_order.OrderTime"/>
+            <input type="text" @bind="_order.Addres"/>
+            <button type="submit">Заказать</button>
+        </EditForm>
+    </div>
+</div>
 
 
 @code {
-    private Basket _basket = new Basket();
+    private Basket _selectedbasket;
+    private Order _order = new Order();
+
+    private void AddToOrder(int basketId)
+    {
+        _selectedbasket = ef.Baskets.FirstOrDefault(p => p.Id == basketId);
+        _order.Id = basketId;
+        _order.OrderTittle = _selectedbasket.BasketTittle;
+        _order.OrderPhotoLink = _selectedbasket.BasketPhotoLink;
+        _order.OrderType = _selectedbasket.BasketType;
+        _order.OrderDegreeOfRoast = _selectedbasket.BasketDegreeOfRoast;
+        _order.OrderRegion = _selectedbasket.BasketRegion;
+        _order.OrderCount = _selectedbasket.BasketCount;
+        _order.OrderPrice = _selectedbasket.BasketPrice;
+        ef.Add(_order);
+        ef.SaveChanges();
+        _order = new Order();
+    }
+    
+    private void Submit(EditContext arg)
+    {
+        ef.Add(_order);
+        ef.SaveChanges();
+        _order = new Order();
+    }
 }

@@ -1,6 +1,7 @@
 ﻿@page "/"
 @using CoffeeRoast.Database
 @using CoffeeRoast.Models
+
 @rendermode InteractiveServer
 @inject CoffeeContext ef
 @inject NavigationManager NavigationManager
@@ -50,12 +51,14 @@
 <!-- Шапка с кнопками авторизации -->
 <div class="header">
     <div class="auth-buttons-header">
+        <!-- Кнопка корзины ВСЕГДА видна -->
+        <button @onclick="HandleBasketClick" class="basket-btn">
+            Корзина
+        </button>
+
         @if (_currentUser != null)
         {
-        <span>Добро пожаловать, @_currentUser.Name!</span>
-        <button @onclick="GoToBasket" class="basket-btn">
-            Перейти в корзину
-        </button>
+        <span>Добро пожовать, @_currentUser.Name!</span>
         <button @onclick="Logout">Выйти</button>
         }
         else
@@ -471,11 +474,27 @@
         _accessoryFilter.Type = type;
     }
 
-    private void AddToBasket(int productId)
+    // метод для корзины
+    private async Task HandleBasketClick()
     {
         if (_currentUser == null)
         {
-// Показываем уведомление и открываем модальное окно входа
+            // Показываем уведомление и предлагаем войти
+            ShowLoginNotification();
+            ShowAuthModal(true);
+        }
+        else
+        {
+            // Переходим в корзину
+            NavigationManager.NavigateTo("/basketpage");
+        }
+    }
+    
+    private async Task AddToBasket(int productId)
+    {
+        if (_currentUser == null)
+        {
+            // Показываем уведомление и открываем модальное окно входа
             ShowLoginNotification();
             ShowAuthModal(true);
             return;
@@ -494,23 +513,23 @@
                 BasketCount = product.Count,
                 BasketPrice = product.Price,
                 BasketDegreeOfRoast = product.DegreeOfRoast,
-                BasketRegion = product.Region
+                BasketRegion = product.Region,
+                UserId = _currentUser.Id // Добавляем привязку к пользователю
             };
 
             ef.Add(_basket);
-            ef.SaveChanges();
+            await ef.SaveChangesAsync();
 
-// Показываем сообщение об успешном добавлении
+            // Показываем сообщение об успешном добавлении
             _authMessage = "Товар добавлен в корзину!";
             _authIsError = false;
             StateHasChanged();
+
+            // Автоматически скрываем сообщение через 2 секунды
+            await Task.Delay(2000);
+            _authMessage = "";
+            StateHasChanged();
         }
-    }
-    
-    private void GoToBasket()
-    {
-            // Навигация на страницу корзины
-            NavigationManager.NavigateTo("/basketpage");
     }
 
     private void FixSelectAcces()
