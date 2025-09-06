@@ -2,6 +2,7 @@
 @using CoffeeRoast.Database
 @using CoffeeRoast.Models
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using Microsoft.AspNetCore.Components.Forms
 @rendermode InteractiveServer
 @inject CoffeeContext ef
 @inject ProtectedLocalStorage ProtectedLocalStore
@@ -14,6 +15,68 @@
     {
         <div class="notification @(_isError ? "error" : "success")">
             @_message
+        </div>
+    }
+
+    <!-- Модальное окно оплаты -->
+    @if (_showPaymentModal)
+    {
+        <div class="payment-modal">
+            <div class="payment-content">
+                <h3>💳 Оплата банковской картой</h3>
+
+                <div class="card-form">
+                    <div class="form-group">
+                        <label>Номер карты:</label>
+                        <input type="text"
+                               class="form-control card-input"
+                               placeholder="0000 0000 0000 0000"
+                               maxlength="19"
+                               @bind="_cardNumber"/>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Срок действия:</label>
+                            <input type="text"
+                                   class="form-control"
+                                   placeholder="ММ/ГГ"
+                                   maxlength="5"
+                                   @bind="_cardExpiry"/>
+                        </div>
+
+                        <div class="form-group">
+                            <label>CVV:</label>
+                            <input type="password"
+                                   class="form-control"
+                                   placeholder="123"
+                                   maxlength="3"
+                                   @bind="_cardCvv"/>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Имя владельца:</label>
+                        <input type="text"
+                               class="form-control"
+                               placeholder="ALEX KULAGIN"
+                               @bind="_cardHolder"/>
+                    </div>
+
+                    <div class="payment-actions">
+                        <button @onclick="ProcessPayment" class="pay-btn" disabled="@_isProcessing">
+                            @(_isProcessing ? "Обработка..." : "Оплатить " + _userBasketItems.Sum(item => item.BasketPrice * item.BasketCount) + " руб.")
+                        </button>
+                        <button @onclick="ClosePaymentModal" class="cancel-pay-btn">Отмена</button>
+                    </div>
+
+                    <div class="card-icons">
+                        <span class="card-icon">💳</span>
+                        <span class="card-icon">🔒</span>
+                        <span class="secure-text">Оплата защищена</span>
+                    </div>
+                </div>
+            </div>
         </div>
     }
 
@@ -48,23 +111,23 @@
                         {
                             <p>Регион: @item.BasketRegion</p>
                         }
-                        
+
                         <div class="quantity-controls">
                             <label>Количество:</label>
                             <div class="quantity-buttons">
-                                <button @onclick="() => DecreaseQuantity(item)" 
-                                        class="quantity-btn" 
+                                <button @onclick="() => DecreaseQuantity(item)"
+                                        class="quantity-btn"
                                         disabled="@(item.BasketCount <= 1)">
                                     -
                                 </button>
                                 <span class="quantity-value">@item.BasketCount</span>
-                                <button @onclick="() => IncreaseQuantity(item)" 
+                                <button @onclick="() => IncreaseQuantity(item)"
                                         class="quantity-btn">
                                     +
                                 </button>
                             </div>
                         </div>
-                        
+
                         <p>Цена за шт: @item.BasketPrice руб.</p>
                         <p class="item-total">Итого: @(item.BasketPrice * item.BasketCount) руб.</p>
                     </div>
@@ -97,6 +160,19 @@
                     <ValidationMessage For="@(() => _order.Addres)"/>
                 </div>
 
+                <div class="form-group">
+                    <label>Способ оплаты:</label>
+                    <div class="payment-options">
+                        <button type="button" @onclick="OpenPaymentModal" class="payment-option-btn">
+                            💳 Оплатить картой
+                        </button>
+                        <button type="button" @onclick="() => FixSelectPay()"
+                                class="payment-option-btn @(_paymentMethod == "cash" ? "selected" : "")">
+                            💵 Наличными при получении
+                        </button>
+                    </div>
+                </div>
+
                 <button type="submit" class="order-btn" disabled="@_isSubmitting">
                     @(_isSubmitting ? "Оформляем..." : "Оформить заказ")
                 </button>
@@ -113,6 +189,15 @@
     private string _message = "";
     private bool _isError = false;
     private bool _isSubmitting = false;
+    private string _paymentMethod = "";
+
+// Переменные для оплаты картой
+    private bool _showPaymentModal = false;
+    private string _cardNumber = "";
+    private string _cardExpiry = "";
+    private string _cardCvv = "";
+    private string _cardHolder = "";
+    private bool _isProcessing = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -154,6 +239,126 @@
         }
     }
 
+    private void OpenPaymentModal()
+    {
+        _showPaymentModal = true;
+        _paymentMethod = "card";
+    }
+
+    private void ClosePaymentModal()
+    {
+        _showPaymentModal = false;
+        _cardNumber = "";
+        _cardExpiry = "";
+        _cardCvv = "";
+        _cardHolder = "";
+    }
+
+    private void SelectPayment(string method)
+    {
+        _paymentMethod = method;
+        if (method == "card")
+        {
+            OpenPaymentModal();
+        }
+    }
+
+    private async Task ProcessPayment()
+    {
+        _isProcessing = true;
+
+// Декоративная обработка оплаты
+        await Task.Delay(2000); // Имитация обработки
+
+        _isProcessing = false;
+        _showPaymentModal = false;
+
+        ShowMessage("Оплата прошла успешно! Заказ оформляется...");
+
+// Автоматически оформляем заказ после успешной оплаты
+        await SubmitOrderAfterPayment();
+    }
+
+    private async Task SubmitOrderAfterPayment()
+    {
+        _isSubmitting = true;
+
+        try
+        {
+            if (_currentUser == null || !_userBasketItems.Any())
+            {
+                ShowMessage("Корзина пуста или пользователь не авторизован", true);
+                return;
+            }
+
+            if (string.IsNullOrEmpty(_order.Addres) || _order.OrderDate == default)
+            {
+                ShowMessage("Заполните все обязательные поля", true);
+                return;
+            }
+
+// Создаем заказ для каждого товара в корзине
+            foreach (var basketItem in _userBasketItems)
+            {
+                var order = new Order
+                {
+                    OrderTittle = basketItem.BasketTittle,
+                    OrderPhotoLink = basketItem.BasketPhotoLink,
+                    OrderType = basketItem.BasketType,
+                    OrderDegreeOfRoast = basketItem.BasketDegreeOfRoast,
+                    OrderRegion = basketItem.BasketRegion,
+                    OrderCount = basketItem.BasketCount,
+                    OrderPrice = basketItem.BasketPrice,
+                    OrderDate = _order.OrderDate,
+                    Addres = _order.Addres,
+                    PaymentMethod = _paymentMethod,
+                    UserId = _currentUser.Id
+                };
+
+                ef.Orders.Add(order);
+            }
+
+// Очищаем корзину пользователя
+            var userBasketItems = ef.Baskets.Where(b => b.UserId == _currentUser.Id).ToList();
+            ef.Baskets.RemoveRange(userBasketItems);
+
+            await ef.SaveChangesAsync();
+
+// Обновляем список
+            _userBasketItems = new List<Basket>();
+            _order = new Order();
+            _paymentMethod = "";
+
+            ShowMessage("Заказ успешно оформлен! Спасибо за покупку!");
+        }
+        catch (Exception ex)
+        {
+            ShowMessage($"Ошибка оформления заказа: {ex.Message}", true);
+        }
+        finally
+        {
+            _isSubmitting = false;
+        }
+    }
+
+    private async Task SubmitOrder()
+    {
+        if (string.IsNullOrEmpty(_paymentMethod))
+        {
+            ShowMessage("Выберите способ оплаты", true);
+            return;
+        }
+
+        if (_paymentMethod == "card")
+        {
+            OpenPaymentModal();
+        }
+        else
+        {
+            await SubmitOrderAfterPayment();
+        }
+    }
+    
     private async Task IncreaseQuantity(Basket item)
     {
         try
@@ -206,66 +411,6 @@
         }
     }
 
-    private async Task SubmitOrder()
-    {
-        _isSubmitting = true;
-
-        try
-        {
-            if (_currentUser == null || !_userBasketItems.Any())
-            {
-                ShowMessage("Корзина пуста или пользователь не авторизован", true);
-                return;
-            }
-
-            if (string.IsNullOrEmpty(_order.Addres) || _order.OrderDate == default)
-            {
-                ShowMessage("Заполните все обязательные поля", true);
-                return;
-            }
-
-            // Создаем заказ для каждого товара в корзине
-            foreach (var basketItem in _userBasketItems)
-            {
-                var order = new Order
-                {
-                    OrderTittle = basketItem.BasketTittle,
-                    OrderPhotoLink = basketItem.BasketPhotoLink,
-                    OrderType = basketItem.BasketType,
-                    OrderDegreeOfRoast = basketItem.BasketDegreeOfRoast,
-                    OrderRegion = basketItem.BasketRegion,
-                    OrderCount = basketItem.BasketCount,
-                    OrderPrice = basketItem.BasketPrice,
-                    OrderDate = _order.OrderDate,
-                    Addres = _order.Addres,
-                    UserId = _currentUser.Id
-                };
-
-                ef.Orders.Add(order);
-            }
-
-            // Очищаем корзину пользователя
-            var userBasketItems = ef.Baskets.Where(b => b.UserId == _currentUser.Id).ToList();
-            ef.Baskets.RemoveRange(userBasketItems);
-
-            await ef.SaveChangesAsync();
-
-            // Обновляем список
-            _userBasketItems = new List<Basket>();
-            _order = new Order();
-
-            ShowMessage("Заказ успешно оформлен! Спасибо за покупку!");
-        }
-        catch (Exception ex)
-        {
-            ShowMessage($"Ошибка оформления заказа: {ex.Message}", true);
-        }
-        finally
-        {
-            _isSubmitting = false;
-        }
-    }
-
     private void ShowMessage(string message, bool isError = false)
     {
         _message = message;
@@ -283,4 +428,9 @@
         NavigationManager.NavigateTo("/");
     }
 
+    private void FixSelectPay()
+    {
+        SelectPayment("cach");
+    }
 }
+

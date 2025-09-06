@@ -367,6 +367,142 @@ button:disabled {
 }
 /* Для корзины
  */
+/* Стили для модального окна оплаты */
+.payment-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.payment-content {
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.payment-content h3 {
+    text-align: center;
+    margin-bottom: 25px;
+    color: #2c3e50;
+    font-size: 24px;
+}
+
+.card-form {
+    margin-bottom: 20px;
+}
+
+.card-input {
+    letter-spacing: 2px;
+    font-family: 'Courier New', monospace;
+    font-size: 18px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.payment-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 25px;
+}
+
+.pay-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 15px;
+    border-radius: 8px;
+    font-weight: bold;
+    flex: 2;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.pay-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.pay-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.cancel-pay-btn {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 15px;
+    border-radius: 8px;
+    flex: 1;
+    cursor: pointer;
+}
+
+.cancel-pay-btn:hover {
+    background: #5a6268;
+}
+
+.card-icons {
+    text-align: center;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+}
+
+.card-icon {
+    font-size: 24px;
+    margin: 0 5px;
+}
+
+.secure-text {
+    display: block;
+    color: #28a745;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+.payment-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.payment-option-btn {
+    padding: 15px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+    font-size: 16px;
+    text-align: left;
+    transition: all 0.3s ease;
+}
+
+.payment-option-btn:hover {
+    border-color: #007bff;
+    background: #f8f9fa;
+}
+
+.payment-option-btn.selected {
+    border-color: #28a745;
+    background: #d4edda;
+    color: #155724;
+}
+
+/* Остальные стили остаются без изменений */
 .auth-notification {
     padding: 20px;
     text-align: center;

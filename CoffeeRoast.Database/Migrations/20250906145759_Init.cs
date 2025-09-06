@@ -82,15 +82,16 @@ namespace CoffeeRoast.Database.Migrations
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Addres = table.Column<string>(type: "TEXT", nullable: false),
                     OrderTittle = table.Column<string>(type: "TEXT", nullable: false),
                     OrderPhotoLink = table.Column<string>(type: "TEXT", nullable: false),
                     OrderType = table.Column<string>(type: "TEXT", nullable: false),
-                    OrderDegreeOfRoast = table.Column<string>(type: "TEXT", nullable: true),
-                    OrderRegion = table.Column<string>(type: "TEXT", nullable: true),
-                    OrderPrice = table.Column<decimal>(type: "TEXT", nullable: false),
+                    OrderDegreeOfRoast = table.Column<string>(type: "TEXT", nullable: false),
+                    OrderRegion = table.Column<string>(type: "TEXT", nullable: false),
                     OrderCount = table.Column<int>(type: "INTEGER", nullable: false),
+                    OrderPrice = table.Column<decimal>(type: "TEXT", nullable: false),
                     OrderDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    Addres = table.Column<string>(type: "TEXT", nullable: false),
+                    PaymentMethod = table.Column<string>(type: "TEXT", nullable: false),
                     UserId = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>

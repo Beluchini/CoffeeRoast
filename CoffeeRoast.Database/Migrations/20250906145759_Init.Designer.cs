@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CoffeeRoast.Database.Migrations
 {
     [DbContext(typeof(CoffeeContext))]
-    [Migration("20250906140048_Init")]
+    [Migration("20250906145759_Init")]
     partial class Init
     {
         /// <inheritdoc />
@@ -77,6 +77,7 @@ namespace CoffeeRoast.Database.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("OrderDegreeOfRoast")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("OrderPhotoLink")
@@ -87,6 +88,7 @@ namespace CoffeeRoast.Database.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("OrderRegion")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("OrderTittle")
@@ -94,6 +96,10 @@ namespace CoffeeRoast.Database.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("OrderType")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PaymentMethod")
                         .IsRequired()
                         .HasColumnType("TEXT");
 

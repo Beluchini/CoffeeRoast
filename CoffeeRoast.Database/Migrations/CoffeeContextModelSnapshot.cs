@@ -74,6 +74,7 @@ namespace CoffeeRoast.Database.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("OrderDegreeOfRoast")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("OrderPhotoLink")
@@ -84,6 +85,7 @@ namespace CoffeeRoast.Database.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("OrderRegion")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("OrderTittle")
@@ -91,6 +93,10 @@ namespace CoffeeRoast.Database.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("OrderType")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PaymentMethod")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
